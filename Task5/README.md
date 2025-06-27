@@ -1,8 +1,8 @@
 ## Задание 5. Проектирование GraphQL API
 
-# schema.graphql:
+### schema.graphql:
 
-# Описание типов данных
+#### Описание типов данных
 
 ```
 type Client {

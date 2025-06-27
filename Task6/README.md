@@ -1,6 +1,6 @@
 ##Задание 6. Настройка Rate Limiting
 
-# Конфигурация Nginx (nginx.conf):
+### Конфигурация Nginx (nginx.conf):
 
 ```
 http {
