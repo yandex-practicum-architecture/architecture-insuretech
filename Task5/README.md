@@ -1,6 +1,8 @@
 ## Задание 5. Проектирование GraphQL API
 
-### schema.graphql:
+### Cхема GraphQL: 
+
+- см. файл [schema.graphql](./schema.graphql)
 
 #### Описание типов данных
 
