@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scaletestapp-deployment
+  labels:
+    app: scaletestapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scaletestapp
+  template:
+    metadata:
+      labels:
+        app: scaletestapp
+    spec:
+      containers:
+      - name: scaletestapp
+        image: shestera/scaletestapp
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "50m"
+          limits:
+            memory: "50Mi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5

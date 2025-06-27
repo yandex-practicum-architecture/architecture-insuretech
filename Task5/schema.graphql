@@ -1,0 +1,91 @@
+# Описание типов данных
+
+type Client {
+  id: ID!
+  name: String
+  age: Int
+  documents: [Document]
+  relatives: [Relative]
+}
+
+type Document {
+  id: ID!
+  type: String
+  number: String
+  issueDate: String
+  expiryDate: String
+}
+
+type Relative {
+  id: ID!
+  relationType: String
+  name: String
+  age: Int
+}
+
+# Определение Query (запросов)
+
+type Query {
+  client(id: ID!): Client
+  documents(clientId: ID!): [Document]
+  relatives(clientId: ID!): [Relative]
+}
+
+# Определение Mutation (операции изменения данных)
+
+type Mutation {
+  createClient(input: CreateClientInput!): Client
+  updateClient(id: ID!, input: UpdateClientInput!): Client
+  deleteClient(id: ID!): Boolean
+
+  createDocument(clientId: ID!, input: CreateDocumentInput!): Document
+  updateDocument(id: ID!, input: UpdateDocumentInput!): Document
+  deleteDocument(id: ID!): Boolean
+
+  createRelative(clientId: ID!, input: CreateRelativeInput!): Relative
+  updateRelative(id: ID!, input: UpdateRelativeInput!): Relative
+  deleteRelative(id: ID!): Boolean
+}
+
+# Определение Input Types для Mutation
+
+input CreateClientInput {
+  name: String
+  age: Int
+}
+
+input UpdateClientInput {
+  name: String
+  age: Int
+}
+
+input CreateDocumentInput {
+  type: String
+  number: String
+  issueDate: String
+  expiryDate: String
+}
+
+input UpdateDocumentInput {
+  type: String
+  number: String
+  issueDate: String
+  expiryDate: String
+}
+
+input CreateRelativeInput {
+  relationType: String
+  name: String
+  age: Int
+}
+
+input UpdateRelativeInput {
+  relationType: String
+  name: String
+  age: Int
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

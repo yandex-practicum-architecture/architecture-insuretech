@@ -1,0 +1,73 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Обновленная диаграмма контейнеров для системы InsureTech с использованием Transactional Outbox, Kafka, osago-aggregator и паттернов отказоустойчивости
+
+Person(client, "Клиент", "Клиент")
+
+System_Boundary(insureTechProd, "InsureTech Prod") {
+    Container(web_app, "insuretech-web", "JavaScript, React", "Веб-приложение InsureTech\n - использует SSE для обновлений")
+    Container(client_info_service, "client-info", "Kotlin, SpringBoot", "Сервис для учёта клиентских данных")
+    Container(database_client, "ins-comp-settlement-db", "PostgreSQL", "БД для хранения данных клиентов: ФИО, телефон, паспорт и др.")
+    Container(core_app, "core-app", "Kotlin, SpringBoot", "Монолитное приложение:\n - отображает данные о доступных страховых продуктах\n - оформляет новые страховки\n - отображает информацию о купленных страховках")
+    Container(product_aggregator, "ins-product-aggregator", "Kotlin, SpringBoot", "Сервис для интеграции со страховыми компаниями с целью получения информации по страховым продуктам.")
+    Container(database_rates, "core-db", "PostgreSQL", "БД для хранения тарифов страховых компаний, а также заявок клиентов на страховые продукты.")
+    Container(settlement_service, "ins-comp-settlement", "Kotlin, SpringBoot", "Сервис для осуществления взаиморасчётов со страховыми компаниями.")
+    
+    Container(kafka, "Kafka", "Apache Kafka", "Брокер сообщений для event-streaming.")
+    Container(outbox, "Outbox Table", "PostgreSQL", "Таблица для хранения событий перед отправкой в Kafka.")
+    Container(tailer_process, "Tailer Process", "Java, Spring Boot", "Процесс, публикующий события из Outbox в Kafka после коммита.")
+
+    Container(osago_aggregator, "osago-aggregator", "Kotlin, SpringBoot", "Сервис для создания и обработки заявок на ОСАГО.")
+    Container(database_osago, "osago-db", "PostgreSQL", "База данных для хранения статусов заявок, идентификаторов и предложений.")
+
+    Container(api_gateway, "API Gateway", "Nginx", "Обработчик запросов с Rate Limiting для защиты\n osago-aggregator и core-app")
+}
+
+System_Ext(partner_systems, "Системы партнёров", "Программная система\nСистемы партнёров, интегрирующие страховые услуги в свои продукты.")
+
+System_Ext(payment_service, "Платёжный сервис", "Программная система\nВнешний платёжный сервис, через который осуществляется оплата страховок.")
+System_Ext(insurance_systems, "Системы страховых компаний", "Программная система\nПредоставляют API для получения актуальных тарифов, андерайтинга и оформления страховых продуктов.")
+
+Rel(client, api_gateway, "Сначала заполняет заявку и использует (Взаимодействует посредством)")
+Rel(api_gateway, web_app, "Получение и отправка запросов к веб-приложению", "HTTP")
+
+Rel(api_gateway, core_app, "Запросы к core-app", "HTTP (с Rate Limiting)")
+Rel(api_gateway, osago_aggregator, "Запросы к osago-aggregator", "HTTP (с Rate Limiting)")
+
+Rel(web_app, payment_service, "Проведение оплаты за страховки (redirect)", "HTTP")
+
+Rel(web_app, core_app, "1. Получение тарифов\n2. Создание заявок на ОСАГО", "REST")
+Rel(web_app, client_info_service, "Получение/сохранение информации о клиентах", "REST")
+
+Rel(client_info_service, database_client, "Работа с данными", "TCP")
+
+Rel(core_app, database_rates, "Работа с данными", "TCP")
+Rel(core_app, client_info_service, "Получение/сохранение информации о клиентах", "REST")
+
+Rel(core_app, osago_aggregator, "Создание заявки на ОСАГО\n (REST; с Circuit Breaker, Timeout)", "REST")
+Rel(osago_aggregator, database_osago, "Хранение данных о заявках", "TCP")
+Rel(osago_aggregator, insurance_systems, "Запрос предложений по заявкам\n (с Retry, Timeout)", "REST")
+
+Rel(web_app, core_app, "Подключение к потоку обновлений предложений", "SSE")
+Rel(core_app, web_app, "GET /osago-applications/{applicationId}/stream", "SSE")
+
+Rel(core_app, outbox, "Запись событий", "TCP")
+Rel(product_aggregator, outbox, "Запись событий", "TCP")
+Rel(tailer_process, outbox, "Чтение событий для отправки", "Polling")
+
+Rel(tailer_process, kafka, "Публикация событий", "Kafka")
+Rel(core_app, kafka, "Публикация события Insurance Order", "Kafka")
+
+Rel(settlement_service, kafka, "Подписка на события Insurance Orders", "Kafka")
+Rel(settlement_service, kafka, "Подписка на события Product Updates", "Kafka")
+Rel(product_aggregator, kafka, "Публикация события Product Update", "Kafka")
+
+Rel(settlement_service, database_client, "Работа с данными", "TCP")
+Rel(settlement_service, insurance_systems, "Передача данных для взаиморасчётов", "REST, SOAP, GraphQL")
+
+Rel(partner_systems, api_gateway, "Оформление страховок", "REST (через API Gateway)")
+
+@enduml
