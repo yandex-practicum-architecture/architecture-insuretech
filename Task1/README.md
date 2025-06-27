@@ -37,7 +37,7 @@ Kubernetes Cluster:
 
 ![Архитектура развертывания InsureTech](InsureTech_технологическая_архитектура-to-be.png)
 
-Ссылка на схему Drawio: [InsureTech_технологическая архитектура_to be.drawio](InsureTech_технологическая архитектура_to be.drawio)
+Ссылка на схему Drawio: [InsureTech_технологическая_архитектура-to-be.drawio](InsureTech_технологическая_архитектура-to-be.drawio)
 
 Ссылка на схему PlantUML: [InsureTech_технологическая_архитектура-to-be](InsureTech_технологическая_архитектура-to-be.puml)
 
