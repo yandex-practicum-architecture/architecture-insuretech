@@ -57,7 +57,7 @@
 2. [InsureTech_C4_сontainer-diagram.drawio.xml](InsureTech_C4_сontainer-diagram.drawio.xml)  
    XML-файл, содержащий исходные данные диаграммы контейнеров.
 
-3. ![Схема в PlantUML](schema.puml)  
+3. [Схема в PlantUML](schema.puml)  
    Эта же схема представлена в формате PlantUML для визуализации архитектуры системы.
 
 **Диаграмма (PlantUML)**:  
