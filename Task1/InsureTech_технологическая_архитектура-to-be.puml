@@ -1,0 +1,156 @@
+@startuml
+skinparam rectangle {
+  BackgroundColor<<Region>> #E3F2FD
+  BorderColor<<Region>> #64B5F6
+  BackgroundColor<<K8sCluster>> #C8E6C9
+  BorderColor<<K8sCluster>> #388E3C
+  BackgroundColor<<Zone>> #BBDEFB
+  BorderColor<<Zone>> #1976D2
+  BackgroundColor<<DB>> #FFCCBC
+  BorderColor<<DB>> #D84315
+  BackgroundColor<<BackupStorage>> #FFE0B2
+  BorderColor<<BackupStorage>> #FB8C00
+  BackgroundColor<<User>> #FFF9C4
+  BorderColor<<User>> #FBC02D
+  BackgroundColor<<Network>> #BBDEFB
+  BorderColor<<Network>> #1976D2
+  BackgroundColor<<Autoscaling>> #D1C4E9
+  BorderColor<<Autoscaling>> #512DA8
+}
+
+actor "Пользователь" as User <<User>>
+
+rectangle "CDN (Content Delivery Network)" as CDN <<Network>> {
+  rectangle "Edge-сервер" as EdgeServer
+}
+
+rectangle "Global Load Balancer" as GLB <<Network>> {
+  note right of GLB
+    • Распределяет трафик на основе географического местоположения\n
+    • Использует health checks для определения работоспособности\n
+    • Поддерживает различные алгоритмы балансировки нагрузки
+  end note
+}
+
+rectangle "Единый растянутый Kubernetes Cluster\n(Многорегиональный)" <<K8sCluster>> {
+
+  rectangle "Зона A" <<Zone>> {
+    rectangle "WebApp (Zone A)" as WebAppA
+    rectangle "API Gateway (Zone A)" as APIGWA
+    rectangle "Services (Zone A)" as ServicesA 
+    rectangle "Kubernetes Service (Zone A)" as K8sServiceA
+  }
+
+  rectangle "Зона B" <<Zone>> {
+    rectangle "WebApp (Zone B)" as WebAppB
+    rectangle "API Gateway (Zone B)" as APIGWB
+    rectangle "Services (Zone B)" as ServicesB
+    rectangle "Kubernetes Service (Zone B)" as K8sServiceB
+  }
+
+  rectangle "Зона C" <<Zone>> {
+    rectangle "WebApp (Zone C)" as WebAppC
+    rectangle "API Gateway (Zone C)" as APIGWC
+    rectangle "Services (Zone C)" as ServicesC
+    rectangle "Kubernetes Service (Zone C)" as K8sServiceC
+  }
+
+  rectangle "Автоматический горизонтальный автоскейлинг\n(по CPU, памяти, кастомным метрикам)" as Autoscaling <<Autoscaling>>
+}
+
+rectangle "Регион 1" <<Region>> {
+  rectangle "PostgreSQL Master (Zone A)" <<DB>> as PGMaster1
+  rectangle "PostgreSQL Read Replica (Zone B)" <<DB>> as PGReplica1B
+  rectangle "PostgreSQL Read Replica (Zone C)" <<DB>> as PGReplica1C
+  rectangle "PostgreSQL Backups" <<BackupStorage>> as PGBackup1
+  note right of PGMaster1
+    • Синхронная репликация внутри региона\n
+    • Асинхронная репликация с другими регионами
+  end note
+}
+
+rectangle "Регион 2" <<Region>> {
+  rectangle "PostgreSQL Master (Zone A)" <<DB>> as PGMaster2
+  rectangle "PostgreSQL Read Replica (Zone B)" <<DB>> as PGReplica2B
+  rectangle "PostgreSQL Read Replica (Zone C)" <<DB>> as PGReplica2C
+  rectangle "PostgreSQL Backups" <<BackupStorage>> as PGBackup2
+  note right of PGMaster2
+    • Синхронная репликация внутри региона\n
+
+    • Асинхронная репликация с другими регионами
+  end note
+}
+
+rectangle "Географически распределённое\nхранилище бэкапов" <<BackupStorage>> as GeoBackupStorage
+
+User --> CDN
+CDN --> EdgeServer
+EdgeServer --> GLB
+
+GLB --> WebAppA
+GLB --> WebAppB
+GLB --> WebAppC
+
+WebAppA --> K8sServiceA
+WebAppB --> K8sServiceB
+WebAppC --> K8sServiceC
+
+K8sServiceA --> APIGWA
+APIGWA --> ServicesA
+ServicesA --> PGMaster1
+ServicesA --> PGReplica1B
+ServicesA --> PGReplica1C
+
+K8sServiceB --> APIGWB
+APIGWB --> ServicesB
+ServicesB --> PGMaster1
+ServicesB --> PGReplica1B
+ServicesB --> PGReplica1C
+
+K8sServiceC --> APIGWC
+APIGWC --> ServicesC
+ServicesC --> PGMaster1
+ServicesC --> PGReplica1B
+ServicesC --> PGReplica1C
+
+ServicesA ..> PGBackup1 : backup
+PGBackup1 --> GeoBackupStorage
+
+ServicesB ..> PGBackup1
+ServicesC ..> PGBackup1
+
+ServicesA ..> Autoscaling
+ServicesB ..> Autoscaling
+ServicesC ..> Autoscaling
+
+ServicesA ..> ServicesB : Service Discovery
+ServicesB ..> ServicesC : Service Discovery
+ServicesC ..> ServicesA : Service Discovery
+
+ServicesA ..> ServicesB : Network Policies, RBAC
+ServicesB ..> ServicesC : Network Policies, RBAC
+ServicesC ..> ServicesA : Network Policies, RBAC
+
+PGMaster2 <..> PGMaster1 : асинхронная репликация и\nавтоматическое переключение
+PGReplica2B <..> PGReplica1B : асинхронная репликация
+PGReplica2C <..> PGReplica1C : асинхронная репликация
+
+GLB --> K8sServiceA
+GLB --> K8sServiceB
+GLB --> K8sServiceC
+
+note right of PGMaster1
+  • Регулярные полные и инкрементальные бэкапы\n
+  • Хранение в географически распределенном хранилище
+end note
+
+note right of GeoBackupStorage
+  • RTO: 45 минут\n
+  • RPO: 15 минут
+end note
+
+note right of K8sServiceA
+  • Автоматическое переключение при сбое основного PostgreSQL Master в\nрезервную реплику
+end note
+
+@enduml
