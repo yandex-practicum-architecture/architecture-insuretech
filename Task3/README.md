@@ -33,7 +33,7 @@
   
 ### 2. Обновленная диаграмма контейнеров InsureTech с Event-Streaming:
 
-1. Это диаграмма контейнеров C4 для архитектуры системы InsureTech.  
+1. Диаграмма контейнеров C4 для архитектуры системы InsureTech.  
   
   ![C4 Container Diagram](InsureTech_C4_сontainer-diagram.drawio.png)   
 
