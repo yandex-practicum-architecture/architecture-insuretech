@@ -52,8 +52,8 @@
 
 ### Диаграммы
   
-1. ![C4 Container Diagram](InsureTech_C4_сontainer-diagram.drawio.png)  
-   Диаграмма контейнеров C4 для архитектуры системы InsureTech.
+1. Диаграмма контейнеров C4 для архитектуры системы InsureTech.  
+  ![C4 Container Diagram](InsureTech_C4_сontainer-diagram.drawio.png)  
 
 2. [InsureTech_C4_сontainer-diagram.drawio.xml](InsureTech_C4_сontainer-diagram.drawio.xml)  
    XML-файл, содержащий исходные данные диаграммы контейнеров.
